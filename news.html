@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новини — Print MY Mind</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #B7B7B7;
+            --secondary: #E6DFD3;
+            --text-dark: #332C26;
+            --text-light: #F6F6F6;
+            --accent: #CCFF00;
+            --glass: rgba(255,255,255,0.08);
+            --glass-border: rgba(0,0,0,0.12);
+        }
+        html {
+            background-color: var(--bg) !important;
+            background-image: radial-gradient(circle at 20% 20%, rgba(0,0,0,0.06) 0.8px, transparent 1px),
+                              radial-gradient(circle at 80% 80%, rgba(0,0,0,0.04) 0.9px, transparent 1.2px),
+                              linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));
+            background-size: 10px 10px, 14px 14px, 100% 100%;
+            background-repeat: repeat, repeat, no-repeat;
+            background-attachment: fixed;
+        }
+        body{font-family:'Montserrat',sans-serif;background:transparent;color:var(--text-dark);padding:20px;}
+        /* --- ШАПКА ТА МЕНЮ (копія з головної) --- */
+        header { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--glass); backdrop-filter: blur(15px);
+            padding: 16px 35px; border-radius: 100px; border: 1px solid var(--glass-border);
+            position: relative; z-index: 1001;
+        }
+        .logo { display: flex; align-items: center; gap: 14px; font-weight: 900; font-size: 28px; letter-spacing: -1px; background: linear-gradient(45deg, var(--text-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .logo img { height: 72px; width: 72px; object-fit: cover; border-radius: 18px; }
+        .nav-links { display: flex; gap: 25px; list-style: none; align-items: center; }
+        .nav-links a { color: var(--text-dark); text-decoration: none; font-size: 14px; transition: 0.25s; padding: 8px 10px; border-radius: 8px; font-weight: 700; }
+        .nav-links a:hover { background: transparent; color: var(--accent); transform: none; box-shadow: none; }
+        .nav-links a.active { background: transparent; color: var(--accent); box-shadow: none; font-weight: 800; text-decoration: underline; }
+        .social-icons { display: flex; gap: 12px; align-items: center; }
+        .social-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06); color: var(--text-dark); text-decoration: none; font-size: 18px; transition: all 0.3s ease; cursor: pointer; }
+        .hamburger { display: none; background: none; border: none; color: var(--text-dark); font-size: 24px; cursor: pointer; padding: 5px; transition: all 0.3s ease; border-radius: 5px; }
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .nav-links { position: absolute; top: 100%; left: 0; width: 100%; background: rgba(10, 42, 58, 0.6); backdrop-filter: blur(20px); flex-direction: column; max-height: 0; overflow: hidden; transition: 0.3s ease-out; border-radius: 20px; border: 1px solid var(--glass-border); margin-top: 10px; }
+            .nav-links.active { max-height: 500px; padding: 20px 0; }
+            .nav-links a { display: block; color: var(--text-light); padding: 12px 20px; font-size: 16px; }
+            .nav-links a.active { background: transparent; color: var(--accent); border-radius: 0; margin: 0; box-shadow: none; text-decoration: underline; }
+        }
+        h1{font-size:32px;text-align:center;margin-bottom:40px;}
+        .article{background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);border-radius:20px;padding:20px;margin-bottom:30px;}
+        .article img{max-width:100%;border-radius:15px;margin-top:15px;}
+        .article-title{font-size:24px;font-weight:700;margin-bottom:10px;}
+        .article-text{font-size:16px;line-height:1.6;}
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo"><img src="logo.jpg" alt="Print MY Mind Logo"> Print MY Mind</a>
+            <ul class="nav-links" id="main-menu">
+                <li><a href="delivery.html">Доставка</a></li>
+                <li><a href="index.html#contacts">Контакти</a></li>
+            </ul>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="hamburger" onclick="document.getElementById('main-menu').classList.toggle('active')">☰</button>
+            </div>
+        </nav>
+    </header>
+    <h1>Новини Print MY Mind</h1>
+    <div id="news-container">
+        <p>Завантаження...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyCoMilBNzczqZh_KVJVwvpt24EOgK5NnHQ",
+            authDomain: "hapevasek.firebaseapp.com",
+            databaseURL: "https://hapevasek-default-rtdb.firebaseio.com",
+            projectId: "hapevasek",
+            storageBucket: "hapevasek.firebasestorage.app",
+            appId: "1:534239781720:web:c1777589cf46d5cff97b2d"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        function renderNews(items){
+            const container = document.getElementById('news-container');
+            if(!items || Object.keys(items).length===0){
+                container.innerHTML = '<p>Новин поки що немає.</p>';
+                return;
+            }
+            const params = new URLSearchParams(window.location.search);
+            const filterType = params.get('type'); // 'world' or 'grow'
+
+            let worldHtml = '<h2>Новини в світі канабісу</h2>';
+            let growHtml = '<h2>Інформація для грову</h2>';
+            let hasWorld = false;
+            let hasGrow = false;
+
+            Object.values(items).forEach(a => {
+                const itemHtml = `<div class="article">
+                    <div class="article-text">${a.text||''}</div>` +
+                    (a.img?`<img src="${a.img}" alt="">`:'') +
+                    `</div>`;
+                if(a.type === 'grow'){
+                    hasGrow = true;
+                    growHtml += itemHtml;
+                } else {
+                    hasWorld = true;
+                    worldHtml += itemHtml;
+                }
+            });
+
+            let finalHtml = '';
+            if(!filterType || filterType === 'world') {
+                if(hasWorld) finalHtml += worldHtml;
+            }
+            if(!filterType || filterType === 'grow') {
+                if(hasGrow) finalHtml += growHtml;
+            }
+            if(finalHtml === ''){
+                finalHtml = '<p>Новин поки що немає.</p>';
+            }
+            container.innerHTML = finalHtml;
+        }
+
+        onValue(ref(db,'news'), snapshot => {
+            renderNews(snapshot.val());
+        });
+    </script>
+    <script>
+        // minimal menu helpers
+        window.toggleMenu = () => document.getElementById('main-menu')?.classList.toggle('active');
+        window.closeMenu = () => document.getElementById('main-menu')?.classList.remove('active');
+    </script>
+</body>
+</html>

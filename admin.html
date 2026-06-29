@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel — Print MY Mind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --bg: #B7B7B7; /* granite base — усилённый */
+            --secondary: #E6DFD3;
+            --text-dark: #332C26;
+            --accent: #CCFF00;
+            --accent-alt: #8A9A86;
+            --accent-terracotta: #C27D65;
+            --text-light: #F6F6F6;
+            --glass: rgba(255,255,255,0.08);
+            --glass-border: rgba(0,0,0,0.12);
+        }
+        html {
+            background-color: var(--bg) !important;
+            background-image: radial-gradient(circle at 20% 20%, rgba(0,0,0,0.06) 0.8px, transparent 1px),
+                              radial-gradient(circle at 80% 80%, rgba(0,0,0,0.04) 0.9px, transparent 1.2px),
+                              linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));
+            background-size: 10px 10px, 14px 14px, 100% 100%;
+            background-repeat: repeat, repeat, no-repeat;
+            background-attachment: fixed;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: transparent;
+            color: var(--text-dark);
+            padding: 40px;
+            min-height: 100vh;
+        }
+        .admin-container { max-width: 1000px; margin: 0 auto; }
+        .form-card {
+            background: rgba(255,255,255,0.06);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+        }
+        h2 { color: var(--accent); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 14px; }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.06);
+            color: var(--text-dark);
+            border-radius: 8px;
+            outline: none;
+        }
+        button {
+            background: var(--accent);
+            color: var(--text-dark);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .item-card {
+            background: var(--secondary);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .item-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .btn-edit { background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.06);
+            border-radius: 8px;
+        }
+        .category-item-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .category-controls {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-move { background: #6366f1; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .btn-move:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- ШАПКА ТА МЕНЮ (копія з головної) --- */
+        header { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--glass); backdrop-filter: blur(15px);
+            padding: 16px 35px; border-radius: 100px; border: 1px solid var(--glass-border);
+            position: relative; z-index: 1001;
+        }
+        .logo { display: flex; align-items: center; gap: 14px; font-weight: 900; font-size: 28px; letter-spacing: -1px; background: linear-gradient(45deg, var(--text-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .logo img { height: 72px; width: 72px; object-fit: cover; border-radius: 18px; }
+        .nav-links { display: flex; gap: 25px; list-style: none; align-items: center; }
+        .nav-links a { color: var(--text-dark); text-decoration: none; font-size: 14px; transition: 0.25s; padding: 8px 10px; border-radius: 8px; font-weight: 700; }
+        .nav-links a:hover { background: transparent; color: var(--accent); transform: none; box-shadow: none; }
+        .nav-links a.active { background: transparent; color: var(--accent); box-shadow: none; font-weight: 800; text-decoration: underline; }
+        .social-icons { display: flex; gap: 12px; align-items: center; }
+        .social-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06); color: var(--text-dark); text-decoration: none; font-size: 18px; transition: all 0.3s ease; cursor: pointer; }
+        .hamburger { display: none; background: none; border: none; color: var(--text-dark); font-size: 24px; cursor: pointer; padding: 5px; transition: all 0.3s ease; border-radius: 5px; }
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .nav-links { position: absolute; top: 100%; left: 0; width: 100%; background: rgba(10, 42, 58, 0.6); backdrop-filter: blur(20px); flex-direction: column; max-height: 0; overflow: hidden; transition: 0.3s ease-out; border-radius: 20px; border: 1px solid var(--glass-border); margin-top: 10px; }
+            .nav-links.active { max-height: 500px; padding: 20px 0; }
+            .nav-links a { display: block; color: var(--text-light); padding: 12px 20px; font-size: 16px; }
+            .nav-links a.active { background: transparent; color: var(--accent); border-radius: 0; margin: 0; box-shadow: none; text-decoration: underline; }
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    (function() {
+        const password = prompt("Введіть пароль адміністратора:");
+        if (password !== "1234") { 
+            alert("Доступ заборонено!");
+            window.location.href = "index.html"; 
+        }
+    })();
+</script>
+
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo"><img src="logo.jpg" alt="Print MY Mind Logo"> Print MY Mind</a>
+            <ul class="nav-links" id="main-menu">
+                <li><a href="#">Адмін</a></li>
+                <li><a href="delivery.html">Доставка</a></li>
+                <li><a href="index.html#contacts">Контакти</a></li>
+            </ul>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="hamburger" onclick="document.getElementById('main-menu').classList.toggle('active')">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="admin-container">
+    <h1>Управління Print MY Mind ⚙️</h1>
+    <p><a href="index.html" style="color: var(--accent); text-decoration: none;">← На головну сторінку</a></p>
+    
+    <div class="form-card">
+        <h2 id="form-title">Додати новий товар</h2>
+        <form id="product-form">
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+                <label>Назва товару</label>
+                <input type="text" id="p-name" required placeholder="Наприклад: Мухоморний чай">
+            </div>
+            <div class="form-group">
+                <label>Ціна (грн)</label>
+                <input type="number" id="p-price" required placeholder="500">
+            </div>
+            <div class="form-group">
+                <label>Посилання на фото (URL)</label>
+                <input type="text" id="p-img" required placeholder="Вставте посилання (https://...)">
+            </div>
+            <div class="form-group">
+                <label>Опис</label>
+                <textarea id="p-desc" rows="3" placeholder="Опишіть товар..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Категорія</label>
+                <select id="p-category" required>
+                    <option value="">Оберіть категорію</option>
+                    <option value="ДЛЯ СНУ">ДЛЯ СНУ</option>
+                    <option value="КОНЦЕНТРАЦІЯ">КОНЦЕНТРАЦІЯ</option>
+                    <option value="РОЗСЛАБЛЕННЯ">РОЗСЛАБЛЕННЯ</option>
+                    <option value="ЛІБІДО">ЛІБІДО</option>
+                    <option value="ВІДПОЧИНОК">ВІДПОЧИНОК</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" id="p-instock"> В наявності</label>
+            </div>
+            <button type="submit" id="submit-btn">Зберегти товар</button>
+            <button type="button" id="cancel-btn" style="display:none; background:#555; color: var(--text-light);">Відмінити</button>
+        </form>
+    </div>
+
+    <h2>Товари в базі даних</h2>
+    <div class="product-list" id="admin-product-grid">Завантаження...</div>
+
+    <div class="form-card">
+        <h2>Управління новинками</h2>
+        <div style="margin-bottom: 20px;">
+            <select id="new-select" style="width: 70%; margin-right: 10px;">
+                <option value="">Оберіть товар для новинок</option>
+            </select>
+            <button onclick="addToNew()">Додати до новинок</button>
+        </div>
+        <div id="new-list"></div>
+    </div>
+
+    <div class="form-card">
+        <h2>Управління топовими товарами</h2>
+        <div style="margin-bottom: 20px;">
+            <select id="top-select" style="width: 70%; margin-right: 10px;">
+                <option value="">Оберіть товар для топових</option>
+            </select>
+            <button onclick="addToTop()">Додати до топових</button>
+        </div>
+        <div id="top-list"></div>
+    </div>
+
+    <div class="form-card">
+        <h2>Управління категоріями</h2>
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="new-category" placeholder="Назва нової категорії" style="width: 70%; margin-right: 10px;">
+            <button onclick="addCategory()">Додати категорію</button>
+        </div>
+        <div id="category-list"></div>
+    <div class="form-card">
+        <h2>Управління контактами</h2>
+        <div class="form-group">
+            <label>Посилання на Телеграм</label>
+            <input type="text" id="contact-telegram" placeholder="https://t.me/...">
+        </div>
+        <div class="form-group">
+            <label>Посилання на Інстаграм</label>
+            <input type="text" id="contact-instagram" placeholder="https://instagram.com/...">
+        </div>
+        <button onclick="saveContacts()">Зберегти контакти</button>
+    </div>
+
+    <div class="form-card">
+        <h2>Управління новинами</h2>
+        <form id="news-form">
+            <input type="hidden" id="news-edit-id">
+            <div class="form-group">
+                <label>Тип новини</label>
+                <select id="news-type" required>
+                    <option value="">Оберіть тип</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Текст</label>
+                <textarea id="news-text" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Посилання на фото (URL)</label>
+                <input type="text" id="news-img" placeholder="https://...">
+            </div>
+        </form>
+        <h3>Список новин</h3>
+        <div id="admin-news-list"></div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCoMilBNzczqZh_KVJVwvpt24EOgK5NnHQ",
+        authDomain: "hapevasek.firebaseapp.com",
+        databaseURL: "https://hapevasek-default-rtdb.firebaseio.com",
+        projectId: "hapevasek",
+        storageBucket: "hapevasek.firebasestorage.app",
+        messagingSenderId: "534239781720",
+        appId: "1:534239781720:web:c1777589cf46d5cff97b2d"
+    };
+
+    // Ініціалізація Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    let cachedProducts = {};
+    let newArrivals = [];
+    let topSellers = [];
+    let categories = [];
+
+    const form = document.getElementById('product-form');
+    const grid = document.getElementById('admin-product-grid');
+
+    // Функція отримання товарів
+    function fetchProducts() {
+        db.ref('products').on('value', (snapshot) => {
+            grid.innerHTML = '';
+            const data = snapshot.val();
+            cachedProducts = data || {};
+            if (data) {
+                Object.keys(data).forEach((id) => {
+                    const p = data[id];
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+                    card.innerHTML = `
+                        <img src="${p.img}" onerror="this.src='https://via.placeholder.com/150'" alt="">
+                        <h3>${p.name}</h3>
+                        <p>${p.price} грн</p>
+                        <small>${p.category || 'Без категорії'}</small>
+                        <div class="actions">
+                            <button class="btn-edit" onclick="prepareEdit('${id}')">✎</button>
+                            <button class="btn-delete" onclick="deleteProduct('${id}')">🗑</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } else {
+                grid.innerHTML = '<p>Товарів немає</p>';
+            }
+            populateSelects();
+        }, (error) => {
+            console.error("Помилка читання:", error);
+            grid.innerHTML = '<p style="color:red">Помилка доступу до бази даних!</p>';
+        });
+    }
+
+    // Обробка форми
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const id = document.getElementById('edit-id').value;
+        const productData = {
+            name: document.getElementById('p-name').value,
+            price: document.getElementById('p-price').value,
+            img: document.getElementById('p-img').value,
+            description: document.getElementById('p-desc').value,
+            category: document.getElementById('p-category').value,
+            inStock: document.getElementById('p-instock').checked,
+            timestamp: Date.now()
+        };
+
+        try {
+            if (id) {
+                // Оновлення
+                await db.ref('products/' + id).update(productData);
+                alert('Товар оновлено!');
+            } else {
+                // Додавання
+                await db.ref('products').push(productData);
+                alert('Товар додано успішно!');
+            }
+            resetForm();
+        } catch (error) {
+            console.error("Помилка запису:", error);
+            alert("Помилка: " + error.message);
+        }
+    });
+
+    // Редагування
+    window.prepareEdit = (id) => {
+        db.ref('products/' + id).once('value', (snap) => {
+            const p = snap.val();
+            if (!p) return;
+
+            document.getElementById('p-name').value = p.name || '';
+            document.getElementById('p-price').value = p.price || '';
+            document.getElementById('p-img').value = p.img || '';
+            document.getElementById('p-desc').value = p.description || p.desc || '';
+            document.getElementById('p-category').value = p.category || '';
+            document.getElementById('p-instock').checked = p.inStock !== false;
+            document.getElementById('edit-id').value = id;
+            
+            document.getElementById('form-title').innerText = "Редагувати товар";
+            document.getElementById('submit-btn').innerText = "Оновити";
+            document.getElementById('cancel-btn').style.display = "inline-block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    };
+
+    // Видалення
+    window.deleteProduct = (id) => {
+        if(confirm('Видалити цей товар?')) {
+            // Видалити з products
+            db.ref('products/' + id).remove()
+                .then(() => {
+                    // Видалити з newArrivals якщо є
+                    const newIndex = newArrivals.indexOf(id);
+                    if (newIndex > -1) {
+                        newArrivals.splice(newIndex, 1);
+                        db.ref('newArrivals').set(newArrivals);
+                    }
+                    // Видалити з topSellers якщо є
+                    const topIndex = topSellers.indexOf(id);
+                    if (topIndex > -1) {
+                        topSellers.splice(topIndex, 1);
+                        db.ref('topSellers').set(topSellers);
+                    }
+                    alert('Видалено');
+                })
+                .catch(err => alert('Помилка: ' + err.message));
+        }
+    };
+
+    function resetForm() {
+        form.reset();
+        document.getElementById('edit-id').value = "";
+        document.getElementById('p-instock').checked = false;
+        document.getElementById('form-title').innerText = "Додати новий товар";
+        document.getElementById('submit-btn').innerText = "Зберегти товар";
+        document.getElementById('cancel-btn').style.display = "none";
+    }
+
+    document.getElementById('cancel-btn').onclick = resetForm;
+
+    // Запуск
+    fetchProducts();
+
+    db.ref('newArrivals').on('value', (snapshot) => {
+        newArrivals = snapshot.val() || [];
+        renderNewList();
+    });
+
+    db.ref('topSellers').on('value', (snapshot) => {
+        topSellers = snapshot.val() || [];
+        renderTopList();
+    });
+
+    db.ref('categories').on('value', (snapshot) => {
+        categories = snapshot.val() || [];
+        if (categories.length === 0) {
+            // Додати дефолтні категорії
+            categories = ['Інгалятори', 'Речовини для інгаляторів', 'Дистиляти', 'Міні Бонги', 'Гриндери-подрібнювачі', 'Ковпаки(Наперстки)', 'Суцвіття', 'Косяки'];
+            db.ref('categories').set(categories);
+        }
+        renderCategoryList();
+        populateCategorySelect();
+    });
+
+    function populateSelects() {
+        const newSelect = document.getElementById('new-select');
+        const topSelect = document.getElementById('top-select');
+        newSelect.innerHTML = '<option value="">Оберіть товар для новинок</option>';
+        topSelect.innerHTML = '<option value="">Оберіть товар для топових</option>';
+        Object.keys(cachedProducts).forEach(id => {
+            const p = cachedProducts[id];
+            const option = `<option value="${id}">${p.name}</option>`;
+            newSelect.innerHTML += option;
+            topSelect.innerHTML += option;
+        });
+    }
+
+    function renderNewList() {
+        const container = document.getElementById('new-list');
+        container.innerHTML = '';
+        newArrivals.forEach(id => {
+            const p = cachedProducts[id];
+            if (p) {
+                const div = document.createElement('div');
+                div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.alignItems = 'center'; div.style.marginBottom = '5px';
+                div.innerHTML = `<span>${p.name}</span><button onclick="removeFromNew('${id}')">Видалити</button>`;
+                container.appendChild(div);
+            }
+        });
+    }
+
+    function renderTopList() {
+        const container = document.getElementById('top-list');
+        container.innerHTML = '';
+        topSellers.forEach(id => {
+            const p = cachedProducts[id];
+            if (p) {
+                const div = document.createElement('div');
+                div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.alignItems = 'center'; div.style.marginBottom = '5px';
+                div.innerHTML = `<span>${p.name}</span><button onclick="removeFromTop('${id}')">Видалити</button>`;
+                container.appendChild(div);
+            }
+        });
+    }
+
+    window.addToNew = () => {
+        const select = document.getElementById('new-select');
+        const id = select.value;
+        if (!id || newArrivals.includes(id)) return;
+        newArrivals.push(id);
+        db.ref('newArrivals').set(newArrivals);
+        select.value = '';
+    };
+
+    window.addToTop = () => {
+        const select = document.getElementById('top-select');
+        const id = select.value;
+        if (!id || topSellers.includes(id)) return;
+        topSellers.push(id);
+        db.ref('topSellers').set(topSellers);
+        select.value = '';
+    };
+
+    window.removeFromNew = (id) => {
+        const index = newArrivals.indexOf(id);
+        if (index > -1) {
+            newArrivals.splice(index, 1);
+            db.ref('newArrivals').set(newArrivals);
+        }
+    };
+
+    window.removeFromTop = (id) => {
+        const index = topSellers.indexOf(id);
+        if (index > -1) {
+            topSellers.splice(index, 1);
+            db.ref('topSellers').set(topSellers);
+        }
+    };
+
+    window.addCategory = () => {
+        const input = document.getElementById('new-category');
+        const cat = input.value.trim();
+        if (!cat || categories.includes(cat)) return;
+        categories.push(cat);
+        db.ref('categories').set(categories);
+        input.value = '';
+    };
+
+    window.removeCategory = (cat) => {
+        const index = categories.indexOf(cat);
+        if (index > -1) {
+            categories.splice(index, 1);
+            db.ref('categories').set(categories);
+        }
+    };
+
+    window.moveCategory = (index, direction) => {
+        if (direction === -1 && index > 0) {
+            // Переместить вверх
+            [categories[index], categories[index - 1]] = [categories[index - 1], categories[index]];
+            db.ref('categories').set(categories);
+        } else if (direction === 1 && index < categories.length - 1) {
+            // Переместить вниз
+            [categories[index], categories[index + 1]] = [categories[index + 1], categories[index]];
+            db.ref('categories').set(categories);
+        }
+    };
+
+    function renderCategoryList() {
+        const container = document.getElementById('category-list');
+        container.innerHTML = '';
+        categories.forEach((cat, index) => {
+            const div = document.createElement('div');
+            div.className = 'category-item';
+            const moveUp = index > 0;
+            const moveDown = index < categories.length - 1;
+            div.innerHTML = `
+                <div class="category-item-text">
+                    <span style="font-weight: 600;">${cat}</span>
+                </div>
+                <div class="category-controls">
+                    <button class="btn-move" onclick="moveCategory(${index}, -1)" ${!moveUp ? 'disabled' : ''}>↑</button>
+                    <button class="btn-move" onclick="moveCategory(${index}, 1)" ${!moveDown ? 'disabled' : ''}>↓</button>
+                    <button class="btn-delete" onclick="removeCategory('${cat}')">🗑</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function populateCategorySelect() {
+        const select = document.getElementById('p-category');
+        select.innerHTML = '<option value="">Оберіть категорію</option>';
+        categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+    }
+
+    // Контакти
+    db.ref('contacts').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        document.getElementById('contact-telegram').value = data.telegram || '';
+        document.getElementById('contact-instagram').value = data.instagram || '';
+    });
+
+    window.saveContacts = () => {
+        const contacts = {
+            telegram: document.getElementById('contact-telegram').value,
+            instagram: document.getElementById('contact-instagram').value
+        };
+        db.ref('contacts').set(contacts)
+            .then(() => alert('Контакти збережено!'))
+            .catch(err => alert('Помилка: ' + err.message));
+    };
+
+    // ===== Новини для двох категорій =====
+    let cachedNews = {};
+
+    function fetchNews() {
+        db.ref('news').on('value', snapshot => {
+            cachedNews = snapshot.val() || {};
+            renderNewsList();
+        });
+    }
+
+    function renderNewsList() {
+        const container = document.getElementById('admin-news-list');
+        container.innerHTML = '';
+        Object.keys(cachedNews).forEach(id => {
+            const n = cachedNews[id];
+            const div = document.createElement('div');
+            div.style.display='flex'; div.style.justifyContent='space-between'; div.style.alignItems='center'; div.style.marginBottom='5px';
+            const title = n.type === 'grow' ? 'Інфо для грову' : 'Світ канабісу';
+            div.innerHTML = `<span>[${title}] ${n.text.substring(0,50)}${n.text.length>50?'...':''}</span>
+                <div>
+                    <button onclick="prepareNewsEdit('${id}')">✎</button>
+                    <button onclick="deleteNews('${id}')">🗑</button>
+                </div>`;
+            container.appendChild(div);
+        });
+    }
+
+    document.getElementById('news-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const id = document.getElementById('news-edit-id').value;
+        const newsData = {
+            type: document.getElementById('news-type').value,
+            text: document.getElementById('news-text').value,
+            img: document.getElementById('news-img').value || '',
+            timestamp: Date.now()
+        };
+        if (!newsData.type || !newsData.text) return;
+        if (id) {
+            db.ref('news/' + id).update(newsData).then(() => {
+                alert('Новину оновлено');
+                resetNewsForm();
+            });
+        } else {
+            db.ref('news').push(newsData).then(() => {
+                alert('Новину додано');
+                resetNewsForm();
+            });
+        }
+    });
+
+    function resetNewsForm() {
+        document.getElementById('news-form').reset();
+        document.getElementById('news-edit-id').value='';
+    }
+
+    window.prepareNewsEdit = id => {
+        const n = cachedNews[id];
+        if (!n) return;
+        document.getElementById('news-type').value = n.type;
+        document.getElementById('news-text').value = n.text;
+        document.getElementById('news-img').value = n.img || '';
+        document.getElementById('news-edit-id').value = id;
+        window.scrollTo({top:0,behavior:'smooth'});
+    };
+
+    window.deleteNews = id => {
+        if (confirm('Видалити цю новину?')) {
+            db.ref('news/' + id).remove();
+        }
+    };
+
+    // Запуск додаткових fetch
+    fetchNews();
+
+    // Меню — прості хелпери для мобільної версії
+    window.toggleMenu = () => document.getElementById('main-menu')?.classList.toggle('active');
+    window.closeMenu = () => document.getElementById('main-menu')?.classList.remove('active');
+</script>
+</body>
+</html>

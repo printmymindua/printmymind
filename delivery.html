@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print MY Mind — Доставка та оплата</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #B7B7B7; /* site granite base */
+            --secondary: #E6DFD3;
+            --text-dark: #332C26;
+            --accent: #CCFF00;
+            --accent-alt: #8A9A86;
+            --text-light: #F6F6F6;
+            --glass: rgba(255,255,255,0.08);
+            --glass-border: rgba(0,0,0,0.12);
+            --color-sleep: #ffe082;
+            --color-focus: #80deea;
+            --color-relax: #4fc3f7;
+            --color-libido: #ffab91;
+            --color-rest: #81c784;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            background-color: var(--bg) !important;
+            background-image: radial-gradient(circle at 20% 20%, rgba(0,0,0,0.06) 0.8px, transparent 1px),
+                              radial-gradient(circle at 80% 80%, rgba(0,0,0,0.04) 0.9px, transparent 1.2px),
+                              linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));
+            background-size: 10px 10px, 14px 14px, 100% 100%;
+            background-repeat: repeat, repeat, no-repeat;
+            background-attachment: fixed;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: transparent;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* --- ШАПКА --- */
+        header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+            opacity: 0.6;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            padding: 12px 35px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: -1px;
+            background: linear-gradient(45deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links { display: flex; gap: 25px; list-style: none; align-items: center; }
+        .nav-links a { color: var(--text-dark); text-decoration: none; font-size: 14px; transition: 0.25s; padding: 8px 10px; border-radius: 8px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+        .nav-links a:hover { background: transparent; color: var(--accent); transform: none; box-shadow: none; }
+        .nav-links a.active { background: transparent; color: var(--accent); box-shadow: none; font-weight: 800; text-decoration: underline; }
+
+        .nav-icons {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .hamburger { display: none; background: none; border: none; color: var(--text-dark); font-size: 24px; cursor: pointer; padding: 5px; transition: all 0.3s ease; border-radius: 5px; }
+        .hamburger:hover { background: rgba(0, 206, 209, 0.08); transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+
+        /* Backdrop for mobile menu */
+        .menu-backdrop { display: none; }
+
+        .cart-badge {
+            background: var(--glass-border);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .cat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px 18px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: 0.3s;
+        }
+
+        .cat-item svg { width: 22px; height: 22px; }
+        .cat-item:hover { color: var(--accent); transform: translateY(-2px); }
+
+        /* --- FAQ SECTION --- */
+        .faq-container {
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1.faq-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .faq-item {
+            background: rgba(0,0,0,0.03);
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            width: 100%;
+            max-width: 820px;
+        }
+
+        summary {
+            padding: 25px 30px;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Іконка стрілочки */
+        summary::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid rgba(0,0,0,0.6);
+            border-bottom: 2px solid rgba(0,0,0,0.6);
+            transform: rotate(45deg);
+            transition: 0.3s;
+        }
+
+        details[open] summary::after {
+            transform: rotate(-135deg);
+        }
+
+        .faq-content {
+            padding: 0 30px 30px 30px;
+            color: rgba(51,44,38,0.8);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .faq-content strong { color: var(--text-dark); }
+
+        ul { padding-left: 20px; margin-top: 10px; }
+        li { margin-bottom: 8px; }
+
+        @media (max-width: 768px) {
+            header { padding: 15px 10px; display:flex; flex-direction:column; align-items:center; }
+            .top-bar { flex-direction: column; gap: 10px; text-align: center; font-size: 10px; }
+            .navbar { padding: 10px 20px; flex-wrap: wrap; position: relative; justify-content:center; }
+            .logo { font-size: 18px; }
+            .nav-links {
+                position: absolute; top: 100%; left: 0; width: 100%;
+                background: rgba(10, 42, 58, 0.6); backdrop-filter: blur(20px);
+                flex-direction: column; gap: 0; padding: 0;
+                display: none; overflow: hidden; transition: 0.3s ease-out;
+                border-radius: 20px; border: 1px solid var(--glass-border); margin-top: 10px;
+                align-items: center;
+            }
+            .nav-links.active { display: flex; padding: 20px 0; }
+            .nav-links li { text-align: center; padding: 0; border-bottom: 1px solid rgba(0,0,0,0.06); width: 100%; }
+            .nav-links a { display: block; color: var(--text-light); padding: 12px 20px; font-size: 16px; }
+            .nav-links a.active { background: transparent; color: var(--accent); border-radius: 0; margin: 0; box-shadow: none; text-decoration: underline; }
+            .nav-links li:last-child { border: none; }
+            .hamburger { display: block; }
+            .nav-icons { gap: 15px; }
+            .delivery-content { padding: 20px 15px; }
+            .delivery-content h1 { font-size: 28px; }
+            .delivery-content h2 { font-size: 22px; margin-top: 30px; }
+            .delivery-content p { font-size: 14px; }
+            .faq-content { padding: 20px 15px; }
+            .faq-content h2 { font-size: 22px; }
+            .faq-item { margin-bottom: 20px; }
+            .faq-question { font-size: 16px; padding: 15px; }
+            .faq-answer { font-size: 14px; padding: 15px; }
+        }
+
+        @media (max-width: 480px) {
+            .navbar { padding: 8px 15px; }
+            .logo { font-size: 16px; }
+            .nav-links { padding: 15px; }
+            .nav-links a { font-size: 14px; }
+            .nav-icons { gap: 12px; font-size: 16px; }
+            .cart-badge { padding: 3px 8px; font-size: 12px; }
+            .delivery-content { padding: 15px 10px; }
+            .delivery-content h1 { font-size: 24px; }
+            .delivery-content h2 { font-size: 20px; margin-top: 25px; }
+            .delivery-content p { font-size: 13px; }
+            .faq-content { padding: 15px 10px; }
+            .faq-content h2 { font-size: 20px; }
+            .faq-item { margin-bottom: 15px; }
+            .faq-question { font-size: 14px; padding: 12px; }
+            .faq-answer { font-size: 13px; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        
+
+        <nav class="navbar">
+            <div class="logo">Print MY Mind</div>
+            <ul class="nav-links" id="main-menu">
+                <li><a href="index.html" onclick="closeMenu()">Головна</a></li>
+                <li><a href="#" onclick="closeMenu()">Доставка</a></li>
+            </ul>
+            <button class="hamburger" onclick="toggleMenu()">☰</button>
+        </nav>
+
+        <div class="categories">
+        </div>
+    </header>
+
+    <main class="faq-container">
+        <h1 class="faq-title">FAQ</h1>
+
+        <details class="faq-item">
+            <summary>ІНФОРМАЦІЯ ПРО ДОСТАВКУ</summary>
+            <div class="faq-content">
+                <p>Ми доставляємо ваші замовлення по всій Україні через <strong>Нову Пошту</strong>:</p>
+                <ul>
+                    <li>Відправка здійснюється в день замовлення (до 17:00).</li>
+                    <li>Терміни доставки: 1-2 робочі дні.</li>
+                    <li>Вартість — за тарифами перевізника.</li>
+                </ul>
+            </div>
+        </details>
+
+       
+
+        <details class="faq-item">
+            <summary>ІНФОРМАЦІЯ ПРО КУПІВЛЮ ТА ПОВЕРНЕННЯ</summary>
+            <div class="faq-content">
+                <p>Умови та положення
+введення (вкладка на сайті)
+
+1.1 Ви зможете використовувати багато сегментів цього веб-сайту без реєстрації своїх даних. Та перейти в спілкування в один з вибраних вами месенджерів.
+
+1.2 Ми можемо змінити ці умови будь-коли, оновивши це повідомлення. Вам слід регулярно переглядати та перевіряти положення та умови на цьому веб-сайті, оскільки вони є обов'язковими. Якщо ви не бажаєте приймати оновлені умови, ви не повинні продовжувати використовувати цей веб-сайт.
+
+Процедура замовлення
+
+2.1 Ваше замовлення вважається розміщеним, якщо воно надходить до нас у процесі онлайн-оформлення замовлення. При обробці замовлення ми даємо вам можливість перевірити ваше замовлення і виправити помилки.
+
+2.2 Ваше замовлення вважається прийнятим після підтвердження замовлення на відправлення. Ми надішлемо вам підтвердження доставки електронною поштою(або в чаті месенджеру ). Як тільки ми підтвердимо домовленість про доставку, договір купівлі-продажу вважається укладеним, навіть якщо ваш платіж був оброблений негайно, якщо ми не повідомимо вас про те, що ми не приймаємо ваше замовлення, або ви скасуєте своє замовлення. 
+Замовлений товар буде надіслано Вам протягом 2-4 робочих днів після отримання оплати за вибраний товар.
+
+2.3 Ми надсилаємо вам усі повідомлення за адресою, вказаною у вашій реєстраційній формі,або в месенджері. Всі повідомлення та запитання ви надсилаєте на адресу, вказану в нашому інтернет-магазині, у розділі «Контакти», або електронною поштою.
+
+2.4 Ми можемо відмовити у прийомі замовлення, якщо:
+
+товару зараз немає в наявності;
+Ваш платіж не доходить до нас;
+були помилки у ціні чи описі товару;
+Ваші дії не відповідають нашим умовам.
+Ціни
+
+3.1 Усі ціни вказані з урахуванням ПДВ.
+
+3.2 Наші ціни періодично переглядаються, і необхідні зміни будуть опубліковані на нашому веб-сайті, але наступні зміни цін не вплинуть на остаточне підтверджене замовлення.
+
+Повернення та обмін товару
+
+4.1 У разі неякісного товару Покупець повинен повідомити  електронна пошта адміністрація магазину протягом 48 годин електронною поштою: <strong>phytolab420@gmail.com</strong> або за телефоном вказаним у месенджері.
+
+4.2 Товар повертається в оригінальній товарній та транспортній упаковці разом із товарними документами. Перед поверненням товару покупець повинен зв'язатися із продавцем за вказаною адресою електронної пошти. поштою: <strong>phytolab420@gmail.com</strong>
+
+4.3 При поверненні товару покупцю необхідно дотримуватися таких умов:
+
+товар, що повертається, повинен бути в оригінальній, акуратній упаковці;
+товар не може бути пошкоджений Покупцем;
+товар має бути невикористаним, не втративши товарного вигляду (етикетка не пошкоджена, захисна плівка не зірвана тощо) (цей пункт не застосовується у разі повернення бракованого товару);
+товар, що повертається, повинен бути в тій же комплектації, в якій його отримав Покупець;
+при поверненні товару необхідно пред'явити документ про його покупку.
+4.4 Продавець власним коштом вивантажує бракований товар і замінює його товаром належної якості або повертає гроші, сплачені за бракований товар, Покупцеві.
+
+4.5 У випадку, якщо Покупець просить повернення грошей за повернутий товар неналежної якості, він повинен надіслати запит на повернення поштою на адресу <strong>phytolab420@gmail.com</strong>
+ У заяві на повернення Покупець має зазначити:  найменування та кількість невідповідного товару, а також причину повернення. Гроші Покупцеві повертаються на розрахунковий рахунок, з якого було сплачено товар. Гроші повертаються протягом 3-х робочих днів з моменту письмового (e-mail) звернення Покупця та надсилання товару неналежної якості Продавцю.</p>
+                <ul>
+                    
+                </ul>
+            </div>
+        </details>
+    </main>
+
+    <script>
+        window.toggleMenu = () => document.getElementById('main-menu').classList.toggle('active');
+        window.closeMenu = () => document.getElementById('main-menu').classList.remove('active');
+    </script>
+
+    <!-- Protected Data Field -->
+    <div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 12px; margin-top: 40px; border-top: 1px solid rgba(0,0,0,0.06);">
+        <p>© 2026 - Дані захищено</p>
+    </div>
+</body>
+</html>
+
+
+

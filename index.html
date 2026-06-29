@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print MY Mind — Центр легального задоволення</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #B7B7B7; /* site granite base */
+            --secondary: #E6DFD3;
+            --text-dark: #332C26;
+                --text-light: #F6F6F6;
+                --accent: #CCFF00; /* primary accent (neon lime) */
+                --accent-alt: #8A9A86; /* sage */
+                --accent-terracotta: #C27D65;
+                --glass: rgba(255,255,255,0.08);
+                --glass-border: rgba(0,0,0,0.12);
+            --color-sleep: #ffe082;
+            --color-focus: #80deea;
+            --color-relax: #4fc3f7;
+            --color-libido: #ffab91;
+            --color-rest: #81c784;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html {
+            background-color: var(--bg) !important;
+            background-image: radial-gradient(circle at 20% 20%, rgba(0,0,0,0.06) 0.8px, transparent 1px),
+                              radial-gradient(circle at 80% 80%, rgba(0,0,0,0.04) 0.9px, transparent 1.2px),
+                              linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));
+            background-size: 10px 10px, 14px 14px, 100% 100%;
+            background-repeat: repeat, repeat, no-repeat;
+            background-attachment: fixed;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: transparent;
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- МОДАЛЬНЕ ВІКНО ТОВАРУ --- */
+        .modal-product {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px); display: none; justify-content: center;
+            align-items: center; z-index: 20000; padding: 15px;
+        }
+        .modal-content {
+            background: linear-gradient(180deg, rgba(6,12,18,0.92), rgba(6,12,18,0.85));
+            width: 100%; max-width: 600px;
+            max-height: 90vh; border-radius: 30px; border: 1px solid rgba(255,255,255,0.03);
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            animation: zoomIn 0.25s ease; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+        .modal-content::-webkit-scrollbar { width: 5px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .modal-img.zoomed { transform: scale(1.5); cursor: zoom-out; }
+        
+        .modal-img { width: 100%; max-height: 400px; object-fit: contain; flex-shrink: 0; cursor: zoom-in; transition: transform 0.3s; }
+        .modal-body { 
+            padding: 30px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            flex: 1;
+            color: var(--text-light);
+        }
+        .modal-body-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .modal-body-footer {
+            flex-shrink: 0;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.02);
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            justify-content: flex-start;
+            margin-top: 18px;
+        }
+        .modal-category { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .modal-title { font-size: 26px; font-weight: 800; margin-bottom: 12px; color: var(--text-light); line-height: 1.1; }
+        .modal-price { font-size: 22px; color: var(--accent); font-weight: 900; margin-bottom: 18px; }
+        .stock-status {
+            display: inline-block; padding: 8px 15px; border-radius: 8px; font-size: 12px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 15px; background: rgba(255,255,255,0.03); color: var(--text-light);
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+        .stock-available { background: rgba(129, 199, 132, 0.2); color: #81c784; border: 1px solid #81c784; }
+        .stock-unavailable { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
+        .modal-desc { 
+            font-size: 14px; color: #ccc; margin-bottom: 15px; line-height: 1.6; 
+            white-space: pre-wrap; word-wrap: break-word;
+            max-height: 110px; overflow: hidden; transition: max-height 0.4s ease;
+            padding-bottom: 15px;
+            position: relative;
+        }
+        .modal-desc.expanded { max-height: 600px; }
+        .modal-desc::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(180deg, transparent 0%, rgba(10, 42, 58, 0.6) 100%);
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-desc.expanded::after { opacity: 0; }
+        .desc-toggle-btn {
+            background: linear-gradient(135deg, rgba(204,255,0,0.12), rgba(204,255,0,0.08));
+            border: 1px solid var(--accent);
+            color: var(--accent); padding: 12px 18px; border-radius: 12px;
+            font-size: 13px; cursor: pointer; font-weight: 700; transition: all 0.3s ease;
+            display: none; margin-bottom: 20px; width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .desc-toggle-btn:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06));
+            color: var(--text-dark); box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+        }
+        .desc-toggle-btn.active { display: inline-block; }
+        
+        .buy-btn {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06));
+            color: var(--text-dark); border: none; border-radius: 15px;
+            font-weight: 700; font-size: 16px; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.28); padding-left: 30px; padding-right: 30px;
+        }
+        .buy-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.36); }
+        .buy-btn:disabled {
+            opacity: 0.5; cursor: not-allowed; transform: none;
+            background: linear-gradient(135deg, #666, #888);
+            box-shadow: 0 4px 15px rgba(100, 100, 100, 0.3);
+        }
+        .consult-btn {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #9c27b0, #ba68c8);
+            color: var(--text-light); border: none; border-radius: 15px; border: 1px solid rgba(255,255,255,0.03);
+            font-weight: 700; font-size: 16px; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 6px 18px rgba(156, 39, 176, 0.18);
+        }
+        .consult-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(156, 39, 176, 0.5); background: linear-gradient(135deg, #ba68c8, #9c27b0); }
+        .consult-btn:disabled {
+            opacity: 0.5; cursor: not-allowed; transform: none;
+            background: linear-gradient(135deg, #666, #888);
+            box-shadow: 0 4px 15px rgba(100, 100, 100, 0.3);
+        }
+        .btn-group {
+            display: flex; gap: 12px; width: 100%;
+        }
+        .btn-group button { flex: 1; }
+        .close-modal {
+            position: absolute; top: 15px; right: 20px; font-size: 35px;
+            color: var(--text-light); cursor: pointer; z-index: 1000; text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6); border-radius: 50%; padding: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(0,0,0,0.06); transition: all 0.3s ease;
+        }
+        .close-modal:hover { background: rgba(0,0,0,0.8); transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+
+        /* --- ВИБІР КОНТАКТУ --- */
+        .contact-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px); display: none; justify-content: center;
+            align-items: center; z-index: 20001; padding: 15px;
+        }
+        .contact-modal-content {
+            background: var(--secondary); width: 100%; max-width: 500px;
+            border-radius: 30px; border: 1px solid var(--glass-border);
+            position: relative; padding: 40px 30px; text-align: center;
+            animation: zoomIn 0.3s ease;
+        }
+        .contact-modal h2 {
+            color: var(--text-dark);
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .contact-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+        }
+        .contact-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-light);
+            width: 100%;
+        }
+        .contact-btn-tg {
+            background: linear-gradient(135deg, #0088cc, #00b4d8);
+        }
+        .contact-btn-tg:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 136, 204, 0.5);
+        }
+        .contact-btn-ig {
+            background: linear-gradient(135deg, #E1306C, #FD1D1D);
+        }
+        .contact-btn-ig:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(225, 48, 108, 0.5);
+        }
+        .close-contact-modal {
+            position: absolute; top: 15px; right: 20px; font-size: 35px;
+            color: var(--text-light); cursor: pointer; background: rgba(0,0,0,0.6); border-radius: 50%; 
+            padding: 5px; width: 40px; height: 40px; display: flex; align-items: center; 
+            justify-content: center; border: 1px solid rgba(0,0,0,0.06); transition: all 0.3s ease;
+        }
+        .close-contact-modal:hover { background: rgba(0,0,0,0.8); transform: scale(1.1); }
+
+        /* --- ВІКОВА ПЕРЕВІРКА --- */
+        .age-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 42, 58, 0.6); backdrop-filter: blur(15px);
+            display: flex; justify-content: center; align-items: center; z-index: 10000;
+        }
+        .age-modal {
+            background: #000; padding: 40px 20px; border-radius: 25px;
+            text-align: center; max-width: 600px; width: 90%; border: 1px solid #222;
+        }
+        .age-btn { padding: 15px 60px; font-size: 24px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; color: var(--text-light); font-family: 'Montserrat', sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .age-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); background: linear-gradient(135deg, #228B22, #32CD32); }
+        .age-btn-yes { background-color: #228B22; }
+        .age-btn-no { background-color: #8B0000; }
+        .age-btn-no:hover { background: linear-gradient(135deg, #8B0000, #DC143C); }
+
+        /* --- ШАПКА ТА МЕНЮ --- */
+        header { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+        .top-bar { display: flex; justify-content: space-between; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; opacity: 0.6; }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--glass); backdrop-filter: blur(15px);
+            padding: 16px 35px; border-radius: 100px; border: 1px solid var(--glass-border);
+            position: relative; z-index: 1001;
+        }
+        .logo { display: flex; align-items: center; gap: 14px; font-weight: 900; font-size: 28px; letter-spacing: -1px; background: linear-gradient(45deg, var(--text-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+        .logo img { height: 72px; width: 72px; object-fit: cover; border-radius: 18px; }
+        
+        .nav-links { display: flex; gap: 25px; list-style: none; align-items: center; }
+        .nav-links a { color: var(--text-dark); text-decoration: none; font-size: 14px; transition: 0.25s; padding: 8px 10px; border-radius: 8px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+        .nav-links a:hover { background: transparent; color: var(--accent); transform: none; box-shadow: none; }
+        .nav-links a.active { background: transparent; color: var(--accent); box-shadow: none; font-weight: 800; text-decoration: underline; }
+
+        .social-icons { display: flex; gap: 12px; align-items: center; }
+        .social-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06); color: var(--text-dark); text-decoration: none; font-size: 18px; transition: all 0.3s ease; cursor: pointer; }
+        #tg-icon svg { fill: #0088cc !important; stroke: none; }
+        #ig-icon { background: linear-gradient(135deg, #e1306c, #fcb045); border: none; }
+        #ig-icon svg { stroke: white; }
+        .social-icon:hover { background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06)); color: var(--text-dark); transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+        .hamburger { display: none; background: none; border: none; color: var(--text-dark); font-size: 24px; cursor: pointer; padding: 5px; transition: all 0.3s ease; border-radius: 5px; }
+        .hamburger:hover { background: rgba(0, 206, 209, 0.08); transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+        .cart-badge { background: var(--glass-border); padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+
+        /* --- HERO --- */
+        .hero { max-width: 1200px; margin: 80px auto; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; padding: 0 20px; align-items: center; }
+        .hero h1 { font-size: 52px; line-height: 1.1; font-weight: 700; text-transform: uppercase; }
+        .hero-card { background: var(--glass); padding: 40px; border-radius: 30px; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); }
+
+        /* --- ТОП-КНОПКИ --- */
+        .top-buttons-section { max-width: 1200px; margin: 40px auto 20px; padding: 0 20px; text-align: center; }
+        .top-buttons { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; width: 100%; }
+        .top-btn { display: inline-block; padding: 6px 12px; background: var(--glass); border: 1px solid var(--glass-border);
+            color: var(--text-dark); border-radius: 15px; font-size: 11px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;
+            text-decoration: none; flex: 1;
+        }
+        .top-btn:hover { background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06)); color: var(--text-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .news-btn-small, .grower-btn-small { background: linear-gradient(135deg, #9c27b0, #ba68c8); }
+        .news-btn-small:hover, .grower-btn-small:hover { background: linear-gradient(135deg, #ba68c8, #9c27b0); box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4); }
+        @media (max-width: 768px) {
+            .top-btn { padding: 6px 12px; font-size: 10px; flex: 1; margin: 0 5px; }
+            .top-buttons { justify-content: space-between; flex-wrap: nowrap; }
+        }
+
+        /* --- СЕКЦІЯ ТОВАРІВ (3 В РЯД) --- */
+        .popular { max-width: 1200px; margin: 0 auto 80px; padding: 0 20px; }
+        .popular h2 { font-size: 26px; margin-bottom: 40px; font-weight: 700; }
+        
+        .products-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); /* 2 in a row for larger cards */
+            gap: 28px; 
+        }
+        
+        .product-card {
+            aspect-ratio: 1/1.35; /* трохи вищі */
+            border-radius: 25px; border: 1px solid var(--glass-border);
+            position: relative; overflow: hidden; transition: 0.35s ease;
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 18px;
+            background-size: cover; background-position: center; cursor: pointer;
+        }
+        .product-card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 65%); z-index: 1; }
+        
+        .p-content { position: relative; z-index: 2; width: 100%; }
+        .p-content h3 { 
+            font-size: 18px; 
+            line-height: 1.2; 
+            margin-bottom: 6px;
+            color: var(--text-light);
+            font-weight: 700;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* ДОЗВОЛЯЄ 2 РЯДКИ ТЕКСТУ */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .p-card-cat { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 3px; }
+        .p-price { color: var(--accent); font-weight: 700; font-size: 20px; }
+
+        /* --- КАТЕГОРІЇ --- */
+        .categories-section { max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; text-align: center; }
+        .categories-section h2 { font-size: 22px; text-transform: uppercase; margin-bottom: 20px; font-weight: 700; }
+        .categories-dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 300px;
+        }
+        .dropdown-btn {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-dark);
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dropdown-btn:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06));
+            color: var(--text-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 206, 209, 0.4);
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: var(--secondary);
+            min-width: 100%;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            z-index: 100;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+        .dropdown-content.show { display: block; }
+        .dropdown-item {
+            color: var(--text-dark);
+            padding: 12px 20px;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            font-size: 14px;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06));
+            color: var(--text-dark);
+            padding-left: 25px;
+        }
+        .dropdown-item.active {
+            background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06));
+            color: var(--text-dark);
+        }
+        .dropdown-content::-webkit-scrollbar { width: 6px; }
+        .dropdown-content::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+        .category-products { margin-top: 40px; }
+        .advantages {
+            background: rgba(0,0,0,0.03);
+            padding: 60px 30px;
+            border-radius: 30px;
+            margin: 0 auto 80px;
+            max-width: 1100px;
+            text-align: center;
+        }
+        .advantages h2 {
+            font-size: 28px;
+            text-transform: none;
+            margin: 0 auto 40px;
+            font-weight: 700;
+            text-align: center;
+            color: var(--accent);
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            min-width: 180px;
+        }
+        .advantages h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 140%;
+            max-width: 280px;
+            height: 4px;
+            background: var(--accent);
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        .adv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 25px;
+            justify-items: center;
+        }
+        .adv-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0,0,0,0.03);
+            padding: 25px 15px;
+            border-radius: 25px;
+            transition: transform 0.3s, background 0.3s;
+            text-align: center;
+        }
+        .adv-item:hover {
+            transform: translateY(-8px);
+            background: rgba(0,0,0,0.04);
+        }
+        .adv-icon-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06));
+            border: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+        .adv-icon-circle:hover {
+            background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06));
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+        }
+        .adv-icon-circle svg {
+            width: 40px;
+            height: 40px;
+            stroke: var(--accent);
+            transition: stroke 0.3s, fill 0.3s;
+        }
+        .adv-icon-circle:hover svg {
+            stroke: var(--text-light);
+            fill: var(--text-light);
+        }
+        .adv-item h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+        .adv-item p {
+            font-size: 14px;
+            color: rgba(51,44,38,0.85);
+            line-height: 1.4;
+        }
+
+        /* --- ТАБИ --- */
+        .tabs-section { display: flex; flex-direction: column; align-items: center; margin-top: 40px; margin-bottom: 100px; }
+        .tabs-switch { display: flex; gap: 10px; background: rgba(0, 0, 0, 0.03); padding: 6px; border-radius: 14px; border: 1px solid var(--glass-border); margin-bottom: 40px; }
+        .tab-btn { padding: 12px 25px; border-radius: 10px; border: none; background: transparent; color: var(--text-dark); font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; font-size: 13px; font-family: 'Montserrat'; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .tab-btn:hover { background: rgba(0, 206, 209, 0.08); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+        .tab-btn.active { background: var(--text-light); color: var(--text-dark); font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .tab-btn.disabled { opacity: 0.5; pointer-events: none; }
+        .tab-content { display: none; width: 100%; max-width: 1200px; padding: 0 20px; }
+        .tab-content.active { display: grid; }
+
+        .scroll-up { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 50%; color: var(--text-dark); display: flex; justify-content: center; align-items: center; text-decoration: none; z-index: 1000; }
+
+        /* --- МОБІЛЬНА АДАПТАЦІЯ --- */
+        @media (max-width: 768px) {
+            .hero { grid-template-columns: 1fr; text-align: center; margin: 40px auto; }
+            .adv-grid { grid-template-columns: repeat(2, 1fr); gap: 30px; }
+            .advantages h2 { margin-bottom: 30px; }
+            .advantages h2::after { width: 80%; max-width: 220px; }
+            
+            .navbar { padding: 12px 15px; }
+            .social-icons { gap: 8px; }
+            .social-icon { width: 32px; height: 32px; font-size: 14px; }
+            .logo { flex-wrap: nowrap; white-space: nowrap; gap: 8px; font-size: 16px; }
+            .logo img { height: 36px; width: 36px; }
+            
+            .hamburger { display: block; }
+            .nav-links {
+                position: absolute; top: 100%; left: 0; width: 100%;
+                background: rgba(10, 42, 58, 0.6); backdrop-filter: blur(20px);
+                flex-direction: column; gap: 0; padding: 0;
+                max-height: 0; overflow: hidden; transition: 0.3s ease-out;
+                border-radius: 20px; border: 1px solid var(--glass-border); margin-top: 10px;
+            }
+            .nav-links.active { max-height: 500px; padding: 20px 0; }
+                .nav-links li { text-align: center; padding: 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+                .nav-links a { display: block; color: var(--text-light); padding: 12px 20px; font-size: 16px; }
+            .nav-links a.active { background: transparent; color: var(--accent); border-radius: 0; margin: 0; box-shadow: none; text-decoration: underline; }
+
+            .products-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 12px; 
+            }
+            .product-card { 
+                padding: 10px; 
+                border-radius: 15px; 
+                aspect-ratio: 1/1.6; /* ЩЕ БІЛЬША ВИСОТА ДЛЯ МОБІЛЬНИХ */
+            }
+            .p-content h3 { font-size: 11px; color: var(--text-light); font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+            .p-price { font-size: 13px; }
+
+            .categories-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .category-btn { padding: 15px; font-size: 14px; }
+
+            /* Мобільна адаптація модального вікна */
+            .modal-content { max-width: 100%; border-radius: 20px; }
+            .modal-body { padding: 20px; }
+            .modal-img { max-height: 300px; }
+            .modal-title { font-size: 18px; }
+            .modal-price { font-size: 16px; }
+            .modal-desc { 
+                font-size: 13px; 
+                max-height: 80px; 
+                padding-bottom: 10px;
+            }
+            .modal-desc.expanded { max-height: 300px; }
+            .desc-toggle-btn { font-size: 11px; padding: 10px 14px; margin-bottom: 15px; }
+            .buy-btn, .consult-btn { padding: 12px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body class="modal-open">
+
+    <div id="product-modal" class="modal-product" onclick="closeProductModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button type="button" class="close-modal" onclick="closeProductModal()">&times;</button>
+            <img id="modal-img" src="" class="modal-img" onclick="event.stopPropagation(); toggleZoom()">
+            <div class="modal-body">
+                <div class="modal-body-content">
+                    <div id="modal-cat" class="modal-category">КАТЕГОРІЯ</div>
+                    <h2 id="modal-title" class="modal-title">Назва</h2>
+                    <div id="modal-price" class="modal-price">0 грн</div>
+                    <div id="stock-status" class="stock-status stock-available">✓ В НАЯВНОСТІ</div>
+                    <button id="desc-toggle" class="desc-toggle-btn" onclick="toggleDescription()">ПОКАЗАТИ ОПИСАННЯ</button>
+                    <p id="modal-desc" class="modal-desc"></p>
+                </div>
+                <div class="modal-body-footer">
+                    <div class="btn-group">
+                        <button class="buy-btn" onclick="showContactModal()">КУПИТИ</button>
+                        <button class="consult-btn" onclick="showContactModal()">КОНСУЛЬТАЦІЯ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="contact-modal" onclick="closeContactModal()">
+        <div class="contact-modal-content" onclick="event.stopPropagation()">
+            <button type="button" class="close-contact-modal" onclick="closeContactModal()">&times;</button>
+            <h2>Виберіть спосіб зв'язку</h2>
+            <div class="contact-buttons">
+                <a id="tg-link" href="#" target="_blank" class="contact-btn contact-btn-tg">
+                    <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.954-.14.579.192l-8.552 7.666h-.002l-.002.001-.914 5.875c.13.843.61.927 1.359.578l3.285-2.566 6.852 5.048c1.27.78 2.154.371 2.425-1.256l4.351-20.471c.223-1.052-.337-1.549-1.159-1.203z"/></svg>
+                    <span>Телеграм</span>
+                </a>
+                <a id="ig-link" href="#" target="_blank" class="contact-btn contact-btn-ig">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><circle cx="17" cy="7" r="1"/></svg>
+                    <span>Інстаграм</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="age-verification" class="age-overlay">
+        <div class="age-modal">
+            <p class="age-text-top">Сайт містить інформацію, дозволену лише для осіб, які досягли 18 років.</p>
+            <h2 class="age-title">ВАМ УЖЕ ВИПОВНИЛОСЬ 18 РОКІВ?</h2>
+            <div class="age-buttons">
+                <button class="age-btn age-btn-yes" onclick="verifyAge(true)">ТАК</button>
+                <button class="age-btn age-btn-no" onclick="verifyAge(false)">НІ</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        
+        <nav class="navbar">
+            <a href="#" class="logo"><img src="logo.jpg" alt="Print MY Mind Logo"> Print MY Mind</a>
+            <ul class="nav-links" id="main-menu">
+                <li><a href="delivery.html" onclick="closeMenu()">Доставка</a></li>
+            </ul>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="social-icons">
+                    <a id="tg-icon" href="#" target="_blank" class="social-icon" title="Телеграм">
+                        <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.954-.14.579.192l-8.552 7.666h-.002l-.002.001-.914 5.875c.13.843.61.927 1.359.578l3.285-2.566 6.852 5.048c1.27.78 2.154.371 2.425-1.256l4.351-20.471c.223-1.052-.337-1.549-1.159-1.203z"/></svg>
+                    </a>
+                    <a id="ig-icon" href="#" target="_blank" class="social-icon" title="Інстаграм">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><circle cx="17" cy="7" r="1"/></svg>
+                    </a>
+                </div>
+                <button class="hamburger" onclick="toggleMenu()">☰</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <!-- Заголовок hero видалено -->
+            <div class="hero-card">
+                <p style="color: var(--text-dark); font-weight: 600; margin-top:15px;">Print MY Mind - світовий лідер в індустрії друку і креативних рішень, відомий своїми інноваціями, якістю та надійним портфелем брендів.</p>
+            </div>
+        </section>
+
+        <section id="categories" class="categories-section">
+            <h2>КАТЕГОРІЇ ТОВАРІВ</h2>
+            <div class="categories-dropdown">
+                <button class="dropdown-btn" onclick="toggleCategoryDropdown()">
+                    <span id="selected-category">Виберіть категорію</span>
+                    <span>▼</span>
+                </button>
+                <div id="categories-grid" class="dropdown-content">
+                </div>
+            </div>
+            <div class="category-products" id="category-products"></div>
+        </section>
+
+        <section class="advantages">
+            <h2>Чому саме ми?</h2>
+            <div class="adv-grid">
+                <div class="adv-item">
+                    <div class="adv-icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                    <h3>Швидка відправка</h3>
+                    <p>Обробка замовлень протягом години з моменту підтвердження.</p>
+                </div>
+                <div class="adv-item">
+                    <div class="adv-icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke="currentColor"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+                    <h3>Якісний сервіс</h3>
+                    <p>Підтримка 24/7 та гарантія повернення коштів.</p>
+                </div>
+                <div class="adv-item">
+                    <div class="adv-icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1-18 0 9 9 0 0118 0z"/></svg></div>
+                    <h3>Низька ціна</h3>
+                    <p>Конкурентні ціни без прихованих комісій.</p>
+                </div>
+                <div class="adv-item">
+                    <div class="adv-icon-circle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke="currentColor">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                        </svg>
+                    </div>
+                    <h3>Широкий вибір</h3>
+                    <p>Сотні позицій із різними характеристиками та брендами.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="tabs-section">
+            <div class="tabs-switch">
+                <button class="tab-btn" onclick="openTab(event, 'new-arrivals')">Новинки</button>
+                <button class="tab-btn active" onclick="openTab(event, 'top-sellers')">Топові товари</button>
+            </div>
+            <div id="new-arrivals" class="tab-content products-grid"></div>
+            <div id="top-sellers" class="tab-content active products-grid"></div>
+        </section>
+    </main>
+
+    <a href="#" class="scroll-up">↑</a>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCoMilBNzczqZh_KVJVwvpt24EOgK5NnHQ",
+            authDomain: "hapevasek.firebaseapp.com",
+            databaseURL: "https://hapevasek-default-rtdb.firebaseio.com",
+            projectId: "hapevasek",
+            storageBucket: "hapevasek.firebasestorage.app",
+            appId: "1:534239781720:web:c1777589cf46d5cff97b2d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let cachedProducts = {};
+        let categories = [];
+        let contacts = { telegram: '#', instagram: '#' };
+
+        window.goToCategories = () => {
+            // Close mobile menu then scroll to categories
+            closeMenu();
+            const el = document.getElementById('categories');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        window.toggleMenu = () => document.getElementById('main-menu').classList.toggle('active');
+        window.closeMenu = () => document.getElementById('main-menu').classList.remove('active');
+
+        window.toggleCategoryDropdown = () => {
+            document.getElementById('categories-grid').classList.toggle('show');
+        };
+
+        window.closeCategoryDropdown = () => {
+            document.getElementById('categories-grid').classList.remove('show');
+        };
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.querySelector('.categories-dropdown');
+            if (!dropdown.contains(e.target)) {
+                closeCategoryDropdown();
+            }
+        });
+
+        window.openProduct = (id) => {
+            const p = cachedProducts[id];
+            if (!p) return;
+            document.getElementById('modal-title').innerText = p.name;
+            document.getElementById('modal-price').innerText = p.price + ' грн';
+            document.getElementById('modal-img').src = p.img;
+            const descText = p.description || p.desc || '';
+            document.getElementById('modal-desc').innerText = descText;
+            document.getElementById('modal-cat').innerText = p.category || 'Загальне';
+            
+            // Setup stock status
+            const stockStatus = document.getElementById('stock-status');
+            const buyBtn = document.querySelector('.buy-btn');
+            const consultBtn = document.querySelector('.consult-btn');
+            const isAvailable = p.inStock !== false; // Default to available if not specified
+            
+            if (isAvailable) {
+                stockStatus.className = 'stock-status stock-available';
+                stockStatus.innerText = '✓ В НАЯВНОСТІ';
+                buyBtn.disabled = false;
+                consultBtn.disabled = false;
+            } else {
+                stockStatus.className = 'stock-status stock-unavailable';
+                stockStatus.innerText = '✗ НЕМАЄ В НАЯВНОСТІ';
+                buyBtn.disabled = true;
+                consultBtn.disabled = true;
+            }
+            
+            // Setup description toggle
+            const descEl = document.getElementById('modal-desc');
+            const toggleBtn = document.getElementById('desc-toggle');
+            
+            // Always show button if there's description text
+            if (descText.trim().length > 0) {
+                toggleBtn.classList.add('active');
+                toggleBtn.innerText = 'ПОКАЗАТИ БІЛЬШЕ ▼';
+                descEl.classList.remove('expanded');
+            } else {
+                toggleBtn.classList.remove('active');
+            }
+            
+            document.getElementById('product-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+            // Reset zoom
+            document.getElementById('modal-img').classList.remove('zoomed');
+        };
+
+        window.toggleDescription = () => {
+            const descEl = document.getElementById('modal-desc');
+            const toggleBtn = document.getElementById('desc-toggle');
+            descEl.classList.toggle('expanded');
+            toggleBtn.innerText = descEl.classList.contains('expanded') ? 'СКРИТИ ▲' : 'ПОКАЗАТИ БІЛЬШЕ ▼';
+        };
+
+        window.toggleZoom = () => {
+            document.getElementById('modal-img').classList.toggle('zoomed');
+        };
+
+        window.closeProductModal = () => {
+            document.getElementById('product-modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        };
+
+        window.showContactModal = () => {
+            document.getElementById('tg-link').href = contacts.telegram;
+            document.getElementById('ig-link').href = contacts.instagram;
+            document.getElementById('contact-modal').style.display = 'flex';
+        };
+
+        window.closeContactModal = () => {
+            document.getElementById('contact-modal').style.display = 'none';
+        };
+
+        window.verifyAge = (adult) => {
+            if (adult) {
+                localStorage.setItem('ageVerified', 'true');
+                document.getElementById('age-verification').style.display = 'none';
+                document.body.classList.remove('modal-open');
+            } else {
+                window.location.href = "https://www.google.com";
+            }
+        };
+
+        window.openTab = (evt, tabId) => {
+            const tabContent = document.getElementById(tabId);
+            if (!tabContent || tabContent.innerHTML.trim() === '') return; // Не переключать если пустой
+            document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            tabContent.classList.add("active");
+            evt.currentTarget.classList.add("active");
+        };
+
+        function showProductsByCategory(category) {
+            const container = document.getElementById('category-products');
+            let html = '';
+            Object.keys(cachedProducts).forEach(id => {
+                const p = cachedProducts[id];
+                if (p && p.category === category) {
+                    html += `
+                    <div class="product-card" style="background-image: url('${p.img}')" onclick="openProduct('${id}')">
+                        <div class="p-content">
+                            <div class="p-card-cat">${p.category || 'Загальне'}</div>
+                            <h3>${p.name}</h3>
+                            <p class="p-price">${p.price} грн</p>
+                        </div>
+                    </div>`;
+                }
+            });
+            container.innerHTML = html ? `<div class="products-grid">${html}</div>` : '<p>Товарів у цій категорії немає</p>';
+        }
+
+        window.filterByCategory = (category, btnEl) => {
+            document.querySelectorAll('.dropdown-item').forEach(btn => btn.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            else {
+                const found = Array.from(document.querySelectorAll('.dropdown-item')).find(b => b.textContent === category);
+                if (found) found.classList.add('active');
+            }
+            showProductsByCategory(category);
+        };
+
+        function renderCategories() {
+            const grid = document.getElementById('categories-grid');
+            grid.innerHTML = '';
+            categories.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = cat;
+                item.onclick = (e) => {
+                    filterByCategory(cat, e.currentTarget);
+                    document.getElementById('selected-category').innerText = cat;
+                    closeCategoryDropdown();
+                };
+                grid.appendChild(item);
+            });
+            // Auto-select first category if exists
+            if (categories.length > 0) {
+                setTimeout(() => {
+                    const first = grid.querySelector('.dropdown-item');
+                    if (first) first.click();
+                }, 50);
+            }
+        }
+
+        function updateTabs() {
+            const news = document.getElementById('new-arrivals');
+            const tops = document.getElementById('top-sellers');
+            const tabsSection = document.querySelector('.tabs-section');
+            const hasNews = news.innerHTML.trim() !== '';
+            const hasTops = tops.innerHTML.trim() !== '';
+            if (!hasNews && !hasTops) {
+                tabsSection.style.display = 'none';
+                return;
+            }
+            tabsSection.style.display = 'flex';
+            document.querySelector('.tab-btn[onclick*="new-arrivals"]').classList.toggle('disabled', !hasNews);
+            document.querySelector('.tab-btn[onclick*="top-sellers"]').classList.toggle('disabled', !hasTops);
+            if (hasTops) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.tab-btn[onclick*="top-sellers"]').classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                tops.classList.add('active');
+            } else if (hasNews) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.tab-btn[onclick*="new-arrivals"]').classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                news.classList.add('active');
+            }
+        }
+
+        onValue(ref(db, 'products'), (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            cachedProducts = data;
+        });
+
+        onValue(ref(db, 'categories'), (snapshot) => {
+            categories = snapshot.val() || [];
+            renderCategories();
+        });
+
+        onValue(ref(db, 'contacts'), (snapshot) => {
+            const data = snapshot.val() || {};
+            contacts = {
+                telegram: data.telegram || '#',
+                instagram: data.instagram || '#'
+            };
+            // Update header social icons
+            document.getElementById('tg-icon').href = contacts.telegram;
+            document.getElementById('ig-icon').href = contacts.instagram;
+        });
+
+        onValue(ref(db, 'newArrivals'), (snapshot) => {
+            const ids = snapshot.val() || [];
+            const news = document.getElementById('new-arrivals');
+            let html = '';
+            ids.forEach(id => {
+                const p = cachedProducts[id];
+                if (p) {
+                    html += `
+                    <div class="product-card" style="background-image: url('${p.img}')" onclick="openProduct('${id}')">
+                        <div class="p-content">
+                            <div class="p-card-cat">${p.category || 'Загальне'}</div>
+                            <h3>${p.name}</h3>
+                            <p class="p-price">${p.price} грн</p>
+                        </div>
+                    </div>`;
+                }
+            });
+            news.innerHTML = html;
+            updateTabs();
+        });
+
+        onValue(ref(db, 'topSellers'), (snapshot) => {
+            const ids = snapshot.val() || [];
+            const tops = document.getElementById('top-sellers');
+            let html = '';
+            ids.forEach(id => {
+                const p = cachedProducts[id];
+                if (p) {
+                    html += `
+                    <div class="product-card" style="background-image: url('${p.img}')" onclick="openProduct('${id}')">
+                        <div class="p-content">
+                            <div class="p-card-cat">${p.category || 'Загальне'}</div>
+                            <h3>${p.name}</h3>
+                            <p class="p-price">${p.price} грн</p>
+                        </div>
+                    </div>`;
+                }
+            });
+            tops.innerHTML = html;
+            updateTabs();
+        });
+
+        if (localStorage.getItem('ageVerified') === 'true') {
+            document.getElementById('age-verification').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        // Highlight home link
+    </script>
+
+    <!-- Protected Data Field -->
+    <div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 12px; margin-top: 40px; border-top: 1px solid rgba(0,0,0,0.06);">
+        <p>© 2026 - Дані захищено</p>
+    </div>
+</body>
+</html>
