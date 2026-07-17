@@ -229,21 +229,7 @@
         }
         .close-contact-modal:hover { background: rgba(0,0,0,0.8); transform: scale(1.1); }
 
-        /* --- ВІКОВА ПЕРЕВІРКА --- */
-        .age-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 42, 58, 0.6); backdrop-filter: blur(15px);
-            display: flex; justify-content: center; align-items: center; z-index: 10000;
-        }
-        .age-modal {
-            background: #000; padding: 40px 20px; border-radius: 25px;
-            text-align: center; max-width: 600px; width: 90%; border: 1px solid #222;
-        }
-        .age-btn { padding: 15px 60px; font-size: 24px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; color: var(--text-light); font-family: 'Montserrat', sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .age-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); background: linear-gradient(135deg, #228B22, #32CD32); }
-        .age-btn-yes { background-color: #228B22; }
-        .age-btn-no { background-color: #8B0000; }
-        .age-btn-no:hover { background: linear-gradient(135deg, #8B0000, #DC143C); }
+        /* age verification styles removed */
 
         /* --- ШАПКА ТА МЕНЮ --- */
         header { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
@@ -268,6 +254,8 @@
         #ig-icon { background: linear-gradient(135deg, #e1306c, #fcb045); border: none; }
         #ig-icon svg { stroke: white; }
         .social-icon:hover { background: linear-gradient(135deg, var(--accent), rgba(0,0,0,0.06)); color: var(--text-dark); transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .contact-link { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,0.03); color: var(--text-dark); text-decoration: none; font-weight: 700; font-size: 14px; }
+        .contact-link:hover { background: rgba(0,0,0,0.06); }
 
         .hamburger { display: none; background: none; border: none; color: var(--text-dark); font-size: 24px; cursor: pointer; padding: 5px; transition: all 0.3s ease; border-radius: 5px; }
         .hamburger:hover { background: rgba(0, 206, 209, 0.08); transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
@@ -507,12 +495,16 @@
             .advantages h2 { margin-bottom: 30px; }
             .advantages h2::after { width: 80%; max-width: 220px; }
             
-            .navbar { padding: 12px 15px; }
+            .navbar { flex-wrap: wrap; gap: 10px; padding: 12px 15px; }
             .social-icons { gap: 8px; }
             .social-icon { width: 32px; height: 32px; font-size: 14px; }
             .logo { flex-wrap: nowrap; white-space: nowrap; gap: 8px; font-size: 16px; }
             .logo img { height: 36px; width: 36px; }
-            
+            .contact-link { width: 100%; justify-content: center; font-size: 13px; padding: 10px 12px; }
+            .contact-link + .contact-link { margin-top: 8px; }
+            #subcategories-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+            #subcategories-list button { flex: 1 1 48%; min-width: 48%; }
+            .categories-dropdown { width: 100%; max-width: 100%; }
             .hamburger { display: block; }
             .nav-links {
                 position: absolute; top: 100%; left: 0; width: 100%;
@@ -525,9 +517,20 @@
                 .nav-links li { text-align: center; padding: 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
                 .nav-links a { display: block; color: var(--text-light); padding: 12px 20px; font-size: 16px; }
             .nav-links a.active { background: transparent; color: var(--accent); border-radius: 0; margin: 0; box-shadow: none; text-decoration: underline; }
+            .contact-link { width: 100%; justify-content: center; font-size: 13px; padding: 10px 12px; }
+            .contact-link + .contact-link { margin-top: 8px; }
+            .navbar { flex-wrap: wrap; gap: 10px; }
+            .dropdown-btn { font-size: 13px; padding: 12px 16px; }
+            #subcategories-list { padding: 10px 0; }
+            #subcategories-list button { flex: 1 1 45%; min-width: 45%; margin-bottom: 8px; }
+            .category-products { margin-top: 30px; }
+            .advantages { padding: 40px 20px; }
+            .adv-grid { grid-template-columns: 1fr; gap: 20px; }
+            .tabs-section { margin-bottom: 60px; }
+            .tab-content { padding: 0 10px; }
 
             .products-grid { 
-                grid-template-columns: repeat(2, 1fr); 
+                grid-template-columns: 1fr; 
                 gap: 12px; 
             }
             .product-card { 
@@ -600,16 +603,7 @@
         </div>
     </div>
 
-    <div id="age-verification" class="age-overlay">
-        <div class="age-modal">
-            <p class="age-text-top">Сайт містить інформацію, дозволену лише для осіб, які досягли 18 років.</p>
-            <h2 class="age-title">ВАМ УЖЕ ВИПОВНИЛОСЬ 18 РОКІВ?</h2>
-            <div class="age-buttons">
-                <button class="age-btn age-btn-yes" onclick="verifyAge(true)">ТАК</button>
-                <button class="age-btn age-btn-no" onclick="verifyAge(false)">НІ</button>
-            </div>
-        </div>
-    </div>
+    <!-- age verification removed -->
 
     <header>
         
@@ -627,6 +621,8 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/><circle cx="17" cy="7" r="1"/></svg>
                     </a>
                 </div>
+                <a class="contact-link" href="tel:+380639314623" title="Телефон +380639314623">📞 +380639314623</a>
+                <a class="contact-link" href="mailto:printmymindua@gmail.com" title="Email printmymindua@gmail.com">✉️ printmymindua@gmail.com</a>
                 <button class="hamburger" onclick="toggleMenu()">☰</button>
             </div>
         </nav>
@@ -649,6 +645,7 @@
                 </button>
                 <div id="categories-grid" class="dropdown-content">
                 </div>
+                <div id="subcategories-list" style="margin-top:10px;padding:8px 12px;display:none;background:transparent;border-radius:8px;"></div>
             </div>
             <div class="category-products" id="category-products"></div>
         </section>
@@ -817,15 +814,7 @@
             document.getElementById('contact-modal').style.display = 'none';
         };
 
-        window.verifyAge = (adult) => {
-            if (adult) {
-                localStorage.setItem('ageVerified', 'true');
-                document.getElementById('age-verification').style.display = 'none';
-                document.body.classList.remove('modal-open');
-            } else {
-                window.location.href = "https://www.google.com";
-            }
-        };
+        // age verification removed
 
         window.openTab = (evt, tabId) => {
             const tabContent = document.getElementById(tabId);
@@ -841,8 +830,12 @@
             let html = '';
             Object.keys(cachedProducts).forEach(id => {
                 const p = cachedProducts[id];
-                if (p && p.category === category) {
-                    html += `
+                if (!p || !p.category) return;
+                // If category is a top-level (no '>'), show products whose category equals it or starts with "Category >"
+                if (category.includes('>')) {
+                    // specific subcategory
+                    if (p.category === category) {
+                        html += `
                     <div class="product-card" style="background-image: url('${p.img}')" onclick="openProduct('${id}')">
                         <div class="p-content">
                             <div class="p-card-cat">${p.category || 'Загальне'}</div>
@@ -850,6 +843,19 @@
                             <p class="p-price">${p.price} грн</p>
                         </div>
                     </div>`;
+                    }
+                } else {
+                    // top-level
+                    if (p.category === category || p.category.startsWith(category + ' >')) {
+                        html += `
+                    <div class="product-card" style="background-image: url('${p.img}')" onclick="openProduct('${id}')">
+                        <div class="p-content">
+                            <div class="p-card-cat">${p.category || 'Загальне'}</div>
+                            <h3>${p.name}</h3>
+                            <p class="p-price">${p.price} грн</p>
+                        </div>
+                    </div>`;
+                    }
                 }
             });
             container.innerHTML = html ? `<div class="products-grid">${html}</div>` : '<p>Товарів у цій категорії немає</p>';
@@ -862,28 +868,70 @@
                 const found = Array.from(document.querySelectorAll('.dropdown-item')).find(b => b.textContent === category);
                 if (found) found.classList.add('active');
             }
+            // If called directly, treat as selecting a top-level or full label
             showProductsByCategory(category);
         };
+
+        function showSubcategories(index) {
+            const subList = document.getElementById('subcategories-list');
+            const selected = document.getElementById('selected-category');
+            const productsContainer = document.getElementById('category-products');
+            if (index === null || index === undefined) return;
+            const cat = categories[index];
+            if (!cat) return;
+            const label = (typeof cat === 'string') ? cat : (cat.name || cat.title || JSON.stringify(cat));
+            selected.innerText = label;
+            // Clear products until a subcategory is chosen
+            productsContainer.innerHTML = '<p>Оберіть підкатегорію щоб побачити товари.</p>';
+            // render subcategories UI
+            if (Array.isArray(cat.children) && cat.children.length) {
+                subList.style.display = 'block';
+                subList.innerHTML = '';
+                cat.children.forEach((ch, ci) => {
+                    const chLabel = (typeof ch === 'string') ? ch : (ch.name || ch.title || JSON.stringify(ch));
+                    const full = `${label} > ${chLabel}`;
+                    const btn = document.createElement('button');
+                    btn.className = 'dropdown-btn';
+                    btn.style.marginRight = '8px';
+                    btn.style.marginBottom = '6px';
+                    btn.textContent = chLabel;
+                    btn.onclick = () => {
+                        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
+                        showProductsByCategory(full);
+                        selected.innerText = full;
+                        // close dropdown on selection
+                        closeCategoryDropdown();
+                    };
+                    subList.appendChild(btn);
+                });
+            } else {
+                // No children — show products for this top-level category
+                subList.style.display = 'none';
+                subList.innerHTML = '';
+                showProductsByCategory(label);
+            }
+            closeCategoryDropdown();
+        }
 
         function renderCategories() {
             const grid = document.getElementById('categories-grid');
             grid.innerHTML = '';
-            categories.forEach(cat => {
+            categories.forEach((cat, index) => {
+                const label = (typeof cat === 'string') ? cat : (cat.name || cat.title || JSON.stringify(cat));
                 const item = document.createElement('div');
                 item.className = 'dropdown-item';
-                item.textContent = cat;
+                item.textContent = label;
                 item.onclick = (e) => {
-                    filterByCategory(cat, e.currentTarget);
-                    document.getElementById('selected-category').innerText = cat;
-                    closeCategoryDropdown();
+                    // show subcategories and products for this top-level category
+                    showSubcategories(index);
                 };
                 grid.appendChild(item);
             });
             // Auto-select first category if exists
             if (categories.length > 0) {
                 setTimeout(() => {
-                    const first = grid.querySelector('.dropdown-item');
-                    if (first) first.click();
+                    // auto-select first top-level category
+                    showSubcategories(0);
                 }, 50);
             }
         }
@@ -978,10 +1026,7 @@
             updateTabs();
         });
 
-        if (localStorage.getItem('ageVerified') === 'true') {
-            document.getElementById('age-verification').style.display = 'none';
-            document.body.classList.remove('modal-open');
-        }
+        // age verification removed
 
         // Highlight home link
     </script>

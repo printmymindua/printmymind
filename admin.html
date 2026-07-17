@@ -129,6 +129,8 @@
         .nav-links a.active { background: transparent; color: var(--accent); box-shadow: none; font-weight: 800; text-decoration: underline; }
         .social-icons { display: flex; gap: 12px; align-items: center; }
         .social-icon { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06); color: var(--text-dark); text-decoration: none; font-size: 18px; transition: all 0.3s ease; cursor: pointer; }
+        .contact-link { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,0.03); color: var(--text-dark); text-decoration: none; font-weight: 700; font-size: 14px; }
+        .contact-link:hover { background: rgba(0,0,0,0.06); }
         .hamburger { display: none; background: none; border: none; color: var(--text-dark); font-size: 24px; cursor: pointer; padding: 5px; transition: all 0.3s ease; border-radius: 5px; }
         @media (max-width: 768px) {
             .hamburger { display: block; }
@@ -136,6 +138,16 @@
             .nav-links.active { max-height: 500px; padding: 20px 0; }
             .nav-links a { display: block; color: var(--text-light); padding: 12px 20px; font-size: 16px; }
             .nav-links a.active { background: transparent; color: var(--accent); border-radius: 0; margin: 0; box-shadow: none; text-decoration: underline; }
+            .navbar { flex-wrap: wrap; gap: 10px; padding: 12px 15px; }
+            .contact-link { width: 100%; justify-content: center; font-size: 13px; padding: 10px 12px; }
+            .contact-link + .contact-link { margin-top: 8px; }
+            .admin-container { padding: 0 10px; }
+            .form-card { padding: 20px; }
+            .product-list { grid-template-columns: 1fr !important; }
+            .item-card img { height: auto; }
+            .category-item { flex-wrap: wrap; gap: 8px; }
+            .category-controls { flex-wrap: wrap; justify-content: flex-end; }
+            .btn-delete, .btn-edit, .btn-move { width: 100%; }
         }
     </style>
 </head>
@@ -160,6 +172,8 @@
                 <li><a href="index.html#contacts">Контакти</a></li>
             </ul>
             <div style="display:flex;align-items:center;gap:12px;">
+                <a class="contact-link" href="tel:+380639314623" title="Телефон +380639314623">📞 +380639314623</a>
+                <a class="contact-link" href="mailto:printmymindua@gmail.com" title="Email printmymindua@gmail.com">✉️ printmymindua@gmail.com</a>
                 <button class="hamburger" onclick="document.getElementById('main-menu').classList.toggle('active')">☰</button>
             </div>
         </nav>
@@ -235,8 +249,11 @@
 
     <div class="form-card">
         <h2>Управління категоріями</h2>
-        <div style="margin-bottom: 20px;">
-            <input type="text" id="new-category" placeholder="Назва нової категорії" style="width: 70%; margin-right: 10px;">
+        <div style="margin-bottom: 20px; display:flex; gap:10px; align-items:center;">
+            <input type="text" id="new-category" placeholder="Назва нової категорії або підкатегорії" style="flex:1;">
+            <select id="parent-category-select" style="width: 35%;">
+                <option value="">Верхній рівень (без батька)</option>
+            </select>
             <button onclick="addCategory()">Додати категорію</button>
         </div>
         <div id="category-list"></div>
@@ -443,9 +460,34 @@
             categories = ['Інгалятори', 'Речовини для інгаляторів', 'Дистиляти', 'Міні Бонги', 'Гриндери-подрібнювачі', 'Ковпаки(Наперстки)', 'Суцвіття', 'Косяки'];
             db.ref('categories').set(categories);
         }
+        normalizeCategoriesStructure();
         renderCategoryList();
         populateCategorySelect();
     });
+
+    function normalizeCategoriesStructure() {
+        // Ensure categories are objects with {name, children: []}
+        let migrated = false;
+        categories = (categories || []).map(c => {
+            if (typeof c === 'string') {
+                migrated = true;
+                return { name: c, children: [] };
+            }
+            if (c && typeof c === 'object') {
+                // normalize children
+                if (!Array.isArray(c.children)) {
+                    c.children = Array.isArray(c.subcategories) ? c.subcategories : (c.children ? [c.children] : []);
+                }
+                c.children = c.children.map(sc => (typeof sc === 'string' ? { name: sc, children: [] } : (sc && typeof sc === 'object' ? (sc.children ? sc : { name: sc.name || sc.title || JSON.stringify(sc), children: sc.children || [] }) : { name: String(sc), children: [] })));
+                return { name: c.name || c.title || JSON.stringify(c), children: c.children };
+            }
+            return { name: String(c), children: [] };
+        });
+        if (migrated) {
+            // persist migrated structure
+            db.ref('categories').set(categories);
+        }
+    }
 
     function populateSelects() {
         const newSelect = document.getElementById('new-select');
@@ -525,15 +567,45 @@
     window.addCategory = () => {
         const input = document.getElementById('new-category');
         const cat = input.value.trim();
-        if (!cat || categories.includes(cat)) return;
-        categories.push(cat);
+        if (!cat) return;
+        const parentSelect = document.getElementById('parent-category-select');
+        const parentVal = parentSelect.value;
+        if (parentVal === '') {
+            // add top-level
+            const exists = categories.some(c => {
+                const label = (typeof c === 'string') ? c : (c.name || c.title || JSON.stringify(c));
+                return label === cat;
+            });
+            if (exists) return;
+            categories.push({ name: cat, children: [] });
+        } else {
+            const pIndex = parseInt(parentVal, 10);
+            if (isNaN(pIndex) || pIndex < 0 || pIndex >= categories.length) return;
+            const parent = categories[pIndex];
+            parent.children = parent.children || [];
+            // prevent duplicate child
+            const childExists = parent.children.some(ch => (ch.name || ch) === cat);
+            if (childExists) return;
+            parent.children.push({ name: cat, children: [] });
+        }
         db.ref('categories').set(categories);
         input.value = '';
+        parentSelect.value = '';
     };
 
-    window.removeCategory = (cat) => {
-        const index = categories.indexOf(cat);
-        if (index > -1) {
+    window.removeSubcategory = (parentIndex, childIndex) => {
+        if (typeof parentIndex !== 'number' || typeof childIndex !== 'number') return;
+        const parent = categories[parentIndex];
+        if (!parent || !Array.isArray(parent.children)) return;
+        if (childIndex > -1 && childIndex < parent.children.length) {
+            parent.children.splice(childIndex, 1);
+            db.ref('categories').set(categories);
+        }
+    };
+
+    window.removeCategory = (index) => {
+        if (typeof index !== 'number') return;
+        if (index > -1 && index < categories.length) {
             categories.splice(index, 1);
             db.ref('categories').set(categories);
         }
@@ -555,29 +627,55 @@
         const container = document.getElementById('category-list');
         container.innerHTML = '';
         categories.forEach((cat, index) => {
+            const label = (typeof cat === 'string') ? cat : (cat.name || cat.title || JSON.stringify(cat));
             const div = document.createElement('div');
             div.className = 'category-item';
             const moveUp = index > 0;
             const moveDown = index < categories.length - 1;
+            // build children html
+            let childrenHtml = '';
+            if (cat && Array.isArray(cat.children) && cat.children.length) {
+                childrenHtml = '<div style="margin-top:8px;padding-left:12px;">';
+                cat.children.forEach((ch, ci) => {
+                    const chLabel = (typeof ch === 'string') ? ch : (ch.name || ch.title || JSON.stringify(ch));
+                    childrenHtml += `<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;\"><span>${chLabel}</span><div><button class=\"btn-delete\" onclick=\"removeSubcategory(${index}, ${ci})\">🗑</button></div></div>`;
+                });
+                childrenHtml += '</div>';
+            }
+
             div.innerHTML = `
-                <div class="category-item-text">
-                    <span style="font-weight: 600;">${cat}</span>
-                </div>
-                <div class="category-controls">
-                    <button class="btn-move" onclick="moveCategory(${index}, -1)" ${!moveUp ? 'disabled' : ''}>↑</button>
-                    <button class="btn-move" onclick="moveCategory(${index}, 1)" ${!moveDown ? 'disabled' : ''}>↓</button>
-                    <button class="btn-delete" onclick="removeCategory('${cat}')">🗑</button>
-                </div>
-            `;
+                    <div class="category-item-text">
+                        <span style="font-weight: 600;">${label}</span>
+                    </div>
+                    <div class="category-controls">
+                        <button class="btn-move" onclick="moveCategory(${index}, -1)" ${!moveUp ? 'disabled' : ''}>↑</button>
+                        <button class="btn-move" onclick="moveCategory(${index}, 1)" ${!moveDown ? 'disabled' : ''}>↓</button>
+                        <button class="btn-delete" onclick="removeCategory(${index})">🗑</button>
+                    </div>
+                    ${childrenHtml}
+                `;
             container.appendChild(div);
         });
     }
 
     function populateCategorySelect() {
         const select = document.getElementById('p-category');
+        const parentSelect = document.getElementById('parent-category-select');
         select.innerHTML = '<option value="">Оберіть категорію</option>';
-        categories.forEach(cat => {
-            select.innerHTML += `<option value="${cat}">${cat}</option>`;
+        parentSelect.innerHTML = '<option value="">Верхній рівень (без батька)</option>';
+        // Flatten categories and children for product select; populate parent select with indices
+        categories.forEach((cat, index) => {
+            const label = (typeof cat === 'string') ? cat : (cat.name || cat.title || JSON.stringify(cat));
+            select.innerHTML += `<option value="${label}">${label}</option>`;
+            parentSelect.innerHTML += `<option value="${index}">${label}</option>`;
+            // children
+            if (cat && Array.isArray(cat.children)) {
+                cat.children.forEach(child => {
+                    const childLabel = (typeof child === 'string') ? child : (child.name || child.title || JSON.stringify(child));
+                    const full = `${label} > ${childLabel}`;
+                    select.innerHTML += `<option value="${full}">${full}</option>`;
+                });
+            }
         });
     }
 
